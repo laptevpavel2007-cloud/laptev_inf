@@ -129,17 +129,16 @@ def show_receipt(check_id):
     receipt_text = f"ЧЕК №{check_id}\n"
 
     for name, qty, price in items:
-        receipt_text += f"{name}\n  {qty} x {price:.2f} = {qty*price:.2f}\n"
+        receipt_text += f"{name}\n  {int(qty)} x {price:.2f} = {qty*price:.2f}\n"
 
     receipt_text += f"ИТОГО: {total:.2f} руб.\n"
     
     win = tk.Toplevel()
     win.title("Чек")
     win.geometry("300x400")
-    text_widget = tk.Text(win, wrap=tk.WORD)
-    text_widget.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+    text_widget = tk.Text(win)
+    text_widget.pack(padx=10, pady=10)
     text_widget.insert(tk.END, receipt_text)
-    text_widget.config(state=tk.DISABLED)
     tk.Button(win, text="Закрыть", command=win.destroy).pack(pady=5)
 
 def Click():
