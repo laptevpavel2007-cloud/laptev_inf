@@ -109,7 +109,38 @@ connection.commit()
 basket_list = []
 all_sum = 0
 basket_labels = []         
-message_label = None     
+message_label = None 
+
+def show_receipt(check_id):
+
+    cursor.execute("""
+        SELECT p.name_of_product, si.quantity, p.price
+        FROM sale_items si
+        JOIN producrs p ON si.id_product = p.id_product
+        WHERE si.id_check = ?
+    """, (check_id,))
+    items = cursor.fetchall()
+    
+    if not items:
+        return
+    
+    total = sum(qty * price for _, qty, price in items)
+    
+    receipt_text = f"ЧЕК №{check_id}\n"
+
+    for name, qty, price in items:
+        receipt_text += f"{name}\n  {qty} x {price:.2f} = {qty*price:.2f}\n"
+
+    receipt_text += f"ИТОГО: {total:.2f} руб.\n"
+    
+    win = tk.Toplevel()
+    win.title("Чек")
+    win.geometry("300x400")
+    text_widget = tk.Text(win, wrap=tk.WORD)
+    text_widget.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+    text_widget.insert(tk.END, receipt_text)
+    text_widget.config(state=tk.DISABLED)
+    tk.Button(win, text="Закрыть", command=win.destroy).pack(pady=5)
 
 def Click():
     global qn, all_sum, basket_labels
@@ -153,33 +184,35 @@ def Click():
     if not flag:
         qn.config(text="Такого товара нет в каталоге!", fg="red")
 
+
 def Click_buy():
     global basket_list, all_sum, basket_labels, message_label
     if not basket_list:
         return
-        
-   
+    
     now = dt.datetime.now().timestamp()
     cursor.execute("INSERT INTO reseipts (created_at, id_cashier) VALUES (?, ?)", (now, 1))
     check_id = cursor.lastrowid
-
+    
     for prod_id, name, qty, price in basket_list:
         cursor.execute("INSERT INTO sale_items (id_check, id_product, quantity) VALUES (?, ?, ?)", (check_id, prod_id, qty))
     connection.commit()
+    
 
+    show_receipt(check_id)
+    
     for lbl in basket_labels:
         lbl.destroy()
     basket_labels.clear()
-    
     if message_label:
         message_label.destroy()
-    
     basket_list = []
     all_sum = 0
     total_lbl.config(text="Итоговая сумма: 0.00")
     
     message_label = tk.Label(basket, text="Покупка оформлена!", fg="green", font="Arial 14")
     message_label.pack(pady=10)
+
 
 def add_to_wh():
     global base, text_name_wh, cnt_wh  
